@@ -66,15 +66,15 @@ app.post(
 );
 
 app.post("/register", async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, name } = req.body;
 
   try {
     const hashedPassword = await hashPassword(password);
 
     const query =
-      "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *";
+      "INSERT INTO users (email, password, name) VALUES ($1, $2, $3) RETURNING *";
 
-    const values = [email, hashedPassword];
+    const values = [email, hashedPassword, name];
 
     await client
       .query(query, values)
@@ -109,6 +109,16 @@ app.post("/login", async (req, res) => {
     console.error("Error during login:", error);
     res.status(500).json({ message: "Server error" });
   }
+});
+
+app.get("/userByEmail", (req, res) => {
+  const { email } = req.query;
+
+  const query = "SELECT * FROM users WHERE email = $1";
+  client
+    .query(query, [email])
+    .then((result) => res.json(result.rows))
+    .catch((err) => res.status(500).json({ error: err.message }));
 });
 
 app.listen(port, () => {
